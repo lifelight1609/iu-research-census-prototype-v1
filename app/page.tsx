@@ -180,13 +180,18 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            IU Researcher Portal
-          </h1>
-          <p className="text-muted-foreground">
-            Discover researchers across Indiana University
-          </p>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">
+              IU Researcher Portal
+            </h1>
+            <p className="text-muted-foreground">
+              Discover researchers across Indiana University
+            </p>
+          </div>
+          <Button variant="outline" size="sm">
+            Login
+          </Button>
         </div>
 
         <Card className="mb-6 border-primary/20 bg-primary/5">
