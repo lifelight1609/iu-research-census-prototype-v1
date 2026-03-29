@@ -182,7 +182,7 @@ export default function Home() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">
-            IU Researchers portal
+            IU Researcher Portal
           </h1>
           <p className="text-muted-foreground">
             Discover researchers across Indiana University
