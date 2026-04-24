@@ -34,6 +34,10 @@ export interface CollaborationGraphData {
 }
 
 const MAX_DEPTH = 2
+const MAX_PARTICIPANTS_PER_PUBLICATION = 16
+const MAX_EXTERNAL_COLLABORATORS_PER_PUBLICATION = 8
+
+const graphCache = new Map<string, CollaborationGraphData>()
 
 function normalizeKey(name: string) {
   return name
@@ -57,6 +61,11 @@ function normalizeId(value: string | number) {
 }
 
 export async function getCollaborationGraphForResearcher(researcherId: string | number): Promise<CollaborationGraphData | null> {
+  const cacheKey = normalizeId(researcherId)
+  if (graphCache.has(cacheKey)) {
+    return graphCache.get(cacheKey) ?? null
+  }
+
   const researchers = (await getResearchers()).map(normalizeResearcher)
   const publications = await getPublications()
 
@@ -170,6 +179,7 @@ export async function getCollaborationGraphForResearcher(researcherId: string | 
     for (const publication of currentPublications) {
       const collaborators = parseCollaborators(publication.collaborators)
       const participantNodeIds = new Set<string>([currentNodeId])
+      const externalCollaborators: string[] = []
 
       for (const collaboratorName of collaborators) {
         if (normalizeKey(collaboratorName) === normalizeKey(researcher.name)) {
@@ -185,13 +195,17 @@ export async function getCollaborationGraphForResearcher(researcherId: string | 
           if (!visited.has(matchedKey) && depth < MAX_DEPTH) {
             queue.push({ researcher: matchedResearcher, depth: depth + 1 })
           }
-        } else {
-          const collaboratorNodeId = ensureCollaboratorNode(collaboratorName, depth + 1)
-          participantNodeIds.add(collaboratorNodeId)
+        } else if (externalCollaborators.length < MAX_EXTERNAL_COLLABORATORS_PER_PUBLICATION) {
+          externalCollaborators.push(collaboratorName)
         }
       }
 
-      const participants = Array.from(participantNodeIds)
+      for (const collaboratorName of externalCollaborators) {
+        const collaboratorNodeId = ensureCollaboratorNode(collaboratorName, depth + 1)
+        participantNodeIds.add(collaboratorNodeId)
+      }
+
+      const participants = Array.from(participantNodeIds).slice(0, MAX_PARTICIPANTS_PER_PUBLICATION)
       for (let i = 0; i < participants.length; i += 1) {
         for (let j = i + 1; j < participants.length; j += 1) {
           addLink(participants[i], participants[j], publication.paper_title)
@@ -219,7 +233,7 @@ export async function getCollaborationGraphForResearcher(researcherId: string | 
 
   const links = Array.from(linkMap.values()).sort((a, b) => b.weight - a.weight)
 
-  return {
+  const graphData: CollaborationGraphData = {
     nodes,
     links,
     stats: {
@@ -230,4 +244,7 @@ export async function getCollaborationGraphForResearcher(researcherId: string | 
       maxDepth: MAX_DEPTH,
     },
   }
+
+  graphCache.set(cacheKey, graphData)
+  return graphData
 }

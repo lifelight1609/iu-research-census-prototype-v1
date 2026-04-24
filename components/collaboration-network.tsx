@@ -128,6 +128,8 @@ export default function CollaborationNetwork({
 
   const nodes = useMemo(() => graph.nodes.map((node) => ({ ...node })), [graph.nodes])
   const links = useMemo(() => graph.links.map((link) => ({ ...link })), [graph.links])
+  const graphData = useMemo(() => ({ nodes, links }), [nodes, links])
+  const enableNodeDrag = nodes.length <= 220
 
   useEffect(() => {
     setSelectedNode(graph.nodes.find((node) => node.kind === 'seed') ?? graph.nodes[0] ?? null)
@@ -176,7 +178,8 @@ export default function CollaborationNetwork({
 
   const nodeSize = (node: CollaborationNode, globalScale: number) => {
     const base = node.kind === 'seed' ? 28 : node.kind === 'researcher' ? 18 : 14
-    return base / globalScale
+    const minSize = node.kind === 'seed' ? 20 : node.kind === 'researcher' ? 14 : 12
+    return Math.max(minSize, base / globalScale)
   }
 
   return (
@@ -224,15 +227,15 @@ export default function CollaborationNetwork({
             {size.width > 0 && size.height > 0 && (
               <ForceGraph2D
                 ref={graphRef}
-                graphData={{ nodes, links }}
+                graphData={graphData}
                 width={size.width}
                 height={size.height}
                 backgroundColor="rgba(0,0,0,0)"
                 nodeRelSize={3}
                 nodeCanvasObjectMode={() => 'replace'}
-                cooldownTicks={120}
-                warmupTicks={40}
-                enableNodeDrag
+                cooldownTicks={60}
+                warmupTicks={30}
+                enableNodeDrag={enableNodeDrag}
                 enableZoomInteraction
                 enablePanInteraction
                 linkOpacity={0.3}
